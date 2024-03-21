@@ -1,6 +1,9 @@
 import puppeteer, {Browser, Page} from 'puppeteer';
 import {config} from 'dotenv';
 import fs from 'fs';
+import { CardInterface } from './models/card.interface';
+import {PlayerInterface} from "./models/player.interface";
+import {TournamentInterface} from "./models/tournament.interface";
 
 
 // récup variables env
@@ -18,7 +21,7 @@ const getCitiesLeagues = async () => {
 
     const page: Page = await browser.newPage();
 
-    console.log(process.env.BASE_URL);
+    console.info('BASE_URL: ' + process.env.BASE_URL);
 
     if (process.env.BASE_URL) {
         await page.goto(process.env.BASE_URL);
@@ -33,7 +36,7 @@ const getCitiesLeagues = async () => {
         throw new Error('Error getting page length');
     }
 
-    let tournaments = [] as any[];
+    let tournaments = [] as TournamentInterface[];
 
     for (let i = 0; i < pageLength; i++) {
         await delay(process.env.INTERVAL);
@@ -49,7 +52,11 @@ const getCitiesLeagues = async () => {
             await page.goto(tournament.tournamentUrl);
             await delay(process.env.INTERVAL);
             console.info(page.url());
-            const players = await getTournamentPlayers(page);
+            const players: PlayerInterface[] = await getTournamentPlayers(page)
+                .catch(error => {
+                    console.error(`Couldn't get players for tournament ${tournament.tournamentUrl}` + error);
+                    return [];
+                });
             tournament.players = players;
 
             // récupération deck par joueur
@@ -58,7 +65,11 @@ const getCitiesLeagues = async () => {
                     await page.goto(player.deckUrl);
                     await delay(process.env.INTERVAL);
                     console.info(page.url());
-                    const deck = await getPlayerDeck(page);
+                    const deck: CardInterface[] = await getPlayerDeck(page)
+                        .catch(error => {
+                            console.error(`Couldn't get deck for ${player.deckUrl}` + error);
+                            return [];
+                        });
                     player.deck = deck;
                 } else {
                     console.error('deckUrl missing');
@@ -75,12 +86,12 @@ const getCitiesLeagues = async () => {
     await browser.close();
 };
 
-const getTournamentsFromPage = async (page: Page): Promise<any[]> => {
+const getTournamentsFromPage = async (page: Page): Promise<TournamentInterface[]> => {
     await page.waitForSelector('td');
     return await page.evaluate(() => {
         const rows = document.querySelectorAll('tr');
 
-        const tournaments = [] as any[];
+        const tournaments = [] as TournamentInterface[];
         rows.forEach(row => {
             if (row.querySelectorAll('td')?.length) {
                 tournaments.push({
@@ -96,11 +107,11 @@ const getTournamentsFromPage = async (page: Page): Promise<any[]> => {
     });
 }
 
-const getTournamentPlayers = async (page: Page): Promise<any[]> => {
+const getTournamentPlayers = async (page: Page): Promise<PlayerInterface[]> => {
     await page.waitForSelector('td');
     return await page.evaluate(() => {
         const rows = document.querySelectorAll('tr');
-        const players = [] as any[];
+        const players = [] as PlayerInterface[];
         rows.forEach(row => {
             if (row.querySelectorAll('td')?.length) {
                 players.push({
@@ -115,11 +126,11 @@ const getTournamentPlayers = async (page: Page): Promise<any[]> => {
     });
 }
 
-const getPlayerDeck = async (page: Page): Promise<any[]> => {
+const getPlayerDeck = async (page: Page): Promise<CardInterface[]> => {
     await page.waitForSelector('span.card-count');
     return await page.evaluate(() => {
         const rows = document.querySelectorAll('div.decklist-card') as NodeListOf<HTMLDivElement>;
-        const cards = [] as any[];
+        const cards = [] as CardInterface[];
         rows.forEach(row => {
             cards.push({
                 name: (row.querySelector('span.card-name') as HTMLSpanElement )?.innerText,
@@ -155,7 +166,7 @@ const delay = (ms: string | undefined) => new Promise(res => {
     console.info('awaiting ' + ms + ' ms...')
 });
 
-const saveToFile = (data: any[]) => {
+const saveToFile = (data: TournamentInterface[]) => {
     const title = Date.now().toString();
     fs.writeFileSync(`./exports/${title}-data.json`, JSON.stringify(data));
 }
