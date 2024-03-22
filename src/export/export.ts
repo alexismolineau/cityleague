@@ -3,10 +3,12 @@ import { TournamentInterface } from "../models/tournament.interface";
 import { PlayerInterface} from "../models/player.interface";
 import {CardInterface} from "../models/card.interface";
 import ScrapUtils from "./utils";
+
+
 export const getCitiesLeagues = async () => {
 
     const browser: Browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         defaultViewport: null,
         dumpio: true
     });

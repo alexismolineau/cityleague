@@ -1,27 +1,24 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express } from 'express';
 import { config } from 'dotenv';
-import { getCitiesLeagues } from './export/export';
-
+import path from 'path';
+import cors from 'cors';
+import home from './server/home';
+import archetypes from './server/archetypes';
 // récup variables env
 config();
 
 const app: Express = express();
 const port = process.env.PORT;
 
+
+// add middlewares
+app.use(express.static(path.join(__dirname, "..", "src/front/build")));
+app.use(express.static("src/front/public"));
+app.use(cors())
+
 app.listen(port, () => {
     console.info(`server up on port ${port}`);
 });
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('Express + TypeScript Server');
-});
-
-/**
- * Lancement export cities leagues
- */
-app.get('/export', (req: Request, res: Response) => {
-    getCitiesLeagues();
-    res.status(200).json({
-        message: 'Export started...'
-    });
-});
+app.use('/', home);
+app.use('/', archetypes);
