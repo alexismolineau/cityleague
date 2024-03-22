@@ -5,19 +5,29 @@
   "main": "index.js",
   "types": "./index.d.ts",
   "scripts": {
+    "setup": "npm install && cd src/front && npm install",
     "build": "rimraf ./build && tsc",
-    "start": "npm run build && node build/index.js",
-    "start:dev": "npx nodemon",
+    "start": "npm run build && npm run build:front && node build/index.js",
+    "start:dev": "start npm run start:front && start npm run start:back ",
+    "start:back": "npx nodemon ./src/index.ts ",
+    "start:front": "cd src/front && npm run-script start",
+    "build:front": "cd src/front && npm run-script build",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/express": "^4.17.21",
+    "chart.js": "^4.4.2",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "express": "^4.19.1",
     "puppeteer": "^22.5.0"
   },
   "devDependencies": {
+    "@types/chart.js": "^2.9.41",
+    "@types/cors": "^2.8.17",
     "@types/node": "^20.11.30",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",

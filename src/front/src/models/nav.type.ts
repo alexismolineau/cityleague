@@ -1,0 +1,1 @@
+export type NavType = 'home' | 'archetypes' | 'archetype';
